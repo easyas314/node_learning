@@ -18,9 +18,9 @@ function doSecond( request, response, next ) {
 
 function profile( request, response, next) {
      console.log("profile page code");
-     next();
-     
+     // next() here would return and then move to the 'app.use(doFirst)'    
 }
+
 // use the given "middleware" handle (function) for the given route (url-path, default '/')
 app.use("/profile", profile);
 app.use(doFirst);
