@@ -14,7 +14,7 @@ const got = require('got');
 // 	retry: {retries: 0}
 // });
 
-var wx_helper =[];
+var wx_helper = {};
 
 
 // module needs to pass these via socket notification?
@@ -45,13 +45,13 @@ module.exports = {
         console.log(`[${wx_helper.name}]:getWxGrid()`);
 		//	You can retrieve the metadata for a given latitude/longitude coordinate with the /points endpoint (https://api.weather.gov/points/{lat},{lon}).
 		// 		base_url: "https://api.weather.gov",
-		var wxPointsURL = config.base_url + "/points/" + config.lat + "," + config.lon;
+		var wxURL = config.base_url + "/points/" + config.lat + "," + config.lon;
 		//var pointsEndpoint = "points/" + config.lat + "," + config.lon;
-        console.log(`[${wx_helper.name}]:getWxGrid() calling = ${wxPointsURL}`);
+        console.log(`[${wx_helper.name}]:getWxGrid() calling = ${wxURL}`);
 		(async () => {
 			try {
 				// take the body object 'guts'
-				const {body} = await got(wxPointsURL, {
+				const {body} = await got(wxURL, {
 					headers: {"User-Agent": "MM-wx-gov/0.1 suowwisq@gmail.com"}
 					,responseType: 'json'
 					//, resolveBodyOnly: true
@@ -77,12 +77,92 @@ module.exports = {
 				//=> 'Internal server error ...'
 			}
 		})();
+	},
+	getWxGridData: function() {
+        console.log(`[${wx_helper.name}]:getWxGridData()`);
+		//var wxURL = `${wx_helper.wxForecastGridURL}/forecast`;
+		var wxURL = wx_helper.wxForecastGridURL;
+        console.log(`[${wx_helper.name}]:getWxGridData() calling = ${wxURL}`);
+		now = moment(); // this will get the current date & time.
+		(async () => {
+			try {
+				// take the body object 'guts'
+				const {body} = await got(wxURL, {
+					headers: {"User-Agent": "MM-wx-gov/0.1 suowwisq@gmail.com"}
+					,responseType: 'json'
+					//, resolveBodyOnly: true
+				});
+				//console.log(`[${wx_helper.name}]:getWxGrid() returned type = ${typeof(body)}`);
+				// body contains text, so make it a json object
 
+				// when the body OBJECT version is examined, it has PassThrough, etc ???
+				//console.log(`[${wx_helper.name}]:getWxGrid() ---- body --------------------`);
+				//console.log(util.inspect(body, false, 1, true /* enable colors */))
 
+				farkle = JSON.parse(body)
+				// NOW it looks to follow the json output from the url in a browser...
+        		//console.log(`[${wx_helper.name}]:getWxGrid() ---- farkle.properties --------------------`);
+				//console.log(util.inspect(farkle.properties, false, 2, true /* enable colors */))
+				wx_helper.wxData.grid.updateTime = moment(new Date(farkle.properties.updateTime));
+				console.log(`[${wx_helper.name}] updateTime = ${wx_helper.grid.updateTime}`);
+
+				// [0..172] hours
+				wx_helper.wxData.grid.temp = farkle.properties.temperature;
+				// max/min for [0..8] days
+				wx_helper.wxData.grid.maxTemp = farkle.properties.maxTemperature;
+				wx_helper.wxData.grid.minTemp = farkle.properties.minTemperature;
+				// [0..103] hours
+				wx_helper.wxData.grid.probPrecip = farkle.properties.probablityOfPrecipitation;
+
+				//=> '<!doctype html> ...'
+			} catch (error) {
+				//console.log(error.response.body);
+				console.log(error);
+				//=> 'Internal server error ...'
+			}
+		})();
 	},
 
-	getWxForeHours: function(config) {
-//					wxData.hourly.properties = resp.properties;
+	getWxForecast: function() {
+		var wxURL = wx_helper.wxForecastGridURL + "/forecast";
+        console.log(`[${wx_helper.name}]:getWxForecast() calling = ${wxURL}`);
+		now = moment(); // this will get the current date & time.
+		(async () => {
+			try {
+				// take the body object 'guts'
+				const {body} = await got(wxURL, {
+					headers: {"User-Agent": "MM-wx-gov/0.1 suowwisq@gmail.com"}
+					,responseType: 'json'
+					//, resolveBodyOnly: true
+				});
+				//console.log(`[${wx_helper.name}]:getWxGrid() returned type = ${typeof(body)}`);
+				// body contains text, so make it a json object
+
+				// when the body OBJECT version is examined, it has PassThrough, etc ???
+				//console.log(`[${wx_helper.name}]:getWxGrid() ---- body --------------------`);
+				//console.log(util.inspect(body, false, 1, true /* enable colors */))
+
+				farkle = JSON.parse(body)
+				// NOW it looks to follow the json output from the url in a browser...
+        		//console.log(`[${wx_helper.name}]:getWxGrid() ---- farkle.properties --------------------`);
+				//console.log(util.inspect(farkle.properties, false, 2, true /* enable colors */))
+				wx_helper.wxData.forecast.updateTime = moment(new Date(farkle.properties.updateTime));
+				console.log(`[${wx_helper.name}] updateTime = ${wx_helper.wxData.forecast.updateTime}`);
+
+				// [0..13] periods
+				wx_helper.wxData.forecast.periods = farkle.properties.periods;
+				console.log(`[${wx_helper.name}] period zero = ${wx_helper.wxData.forecast.periods[0]}`);
+
+			} catch (error) {
+				//console.log(error.response.body);
+				console.log(error);
+				//=> 'Internal server error ...'
+			}
+		})();
+	},
+
+	getWxForeHours: function() {
+//					wx_helper.wxData.hourly.properties = resp.properties;
 	},
 
 	socketNotificationReceived: function(notification, payload){
@@ -91,10 +171,10 @@ module.exports = {
 		  case "WX_FORECAST_GET":
             // payload should have .msg and .config{}
 			console.log(`[${wx_helper.name}] received WX_FORECAST_GET: payload msg = ${payload.msg}`);
-			console.log(`[${wx_helper.name}] ... wxForecastGridURL = ${wx_helper.wxForecastGridURL}`);
 			if (wx_helper.wxForecastGridURL === "") {
 				this.getWxGrid(payload.config)
 			}
+			this.getWxGridData();
 			
             //if data exists, return data
             //else ask for data
@@ -108,30 +188,17 @@ module.exports = {
 			break;
 
 		  case "WX_FORECAST_TEST":
-			// wx api needs a nice user-agent
-			const options = {
-				url: wx_helper.wxForecastHourlyURL,
-				headers: {
-					"User-Agent": "MM-wx-gov / v0.1 suowwisq@gmail.com"
-				},
-				method: "GET"
-			};
-			console.log(`[${wx_helper.name}] Requesting forecast hourly ${options.url}`);
-			request(options, function( error, response, body) {
-				// error is null with a 200 so ..
-				//if(!error && response.statusCode == 200) {
-				if(response.statusCode == 200) {
-					//Good response
-					var resp = JSON.parse(body);
-					//resp.instanceId = payload.instanceId;
-					wxData.hourly.properties = resp.properties;
-					// test: send consumable data
-					bjsHelper.sendSocketNotification("BJSLAB_NOTIFICATION",
-						`The next hour is:\n${wxData.hourly.properties.periods[0].shortForecast}`);
-				} else {
-					console.log(`[${bjsHelper.name}] ERROR: response status = ${response.statusCode}`);
-				}
-			});
+            // payload should have .msg and .config{}
+			console.log(`[${wx_helper.name}] received WX_FORECAST_TEST: payload msg = ${payload.msg}`);
+			if (wx_helper.wxForecastGridURL === "") {
+				this.getWxGrid(payload.config)
+			}
+			this.getWxForecast();
+
+			// test: send consumable data
+			//wx_helper.sendSocketNotification("BJSLAB_NOTIFICATION",
+			//	`The next hour is:\n${wx_helper.wxData.forecast.periods[0].shortForecast}`);
+			console.log(`The next hour is:\n${wx_helper.wxData.forecast.periods[0].shortForecast}`);
 			break;
 		}
 

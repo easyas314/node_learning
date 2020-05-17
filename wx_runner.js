@@ -14,6 +14,8 @@ bjsLab.config = {
 bjsLab.msg = "Here's the config";
 
 wx_helper.start();
-//wx_helper.socketNotificationReceived('WX_FORECAST_GET',bjsLab);
 wx_helper.getWxGrid(bjsLab.config);
+//wx_helper.getWxForecast();
+//wx_helper.socketNotificationReceived('WX_FORECAST_GET',bjsLab);
+//wx_helper.socketNotificationReceived('WX_FORECAST_TEST',bjsLab);
 
