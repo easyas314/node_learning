@@ -1,7 +1,7 @@
 //
 // test runner for the wx_helper.js
 
-console.log("IN THE BIG INNING ...")
+console.log("IN THE BIG INNING ...");
 var wx_helper = require("./wx_helper")
 // module needs to pass these via socket notification?
 var bjsLab = [];
@@ -14,4 +14,6 @@ bjsLab.config = {
 bjsLab.msg = "Here's the config";
 
 wx_helper.start();
-wx_helper.socketNotificationReceived('WX_FORECAST_GET',bjsLab);
+//wx_helper.socketNotificationReceived('WX_FORECAST_GET',bjsLab);
+wx_helper.getWxGrid(bjsLab.config);
+

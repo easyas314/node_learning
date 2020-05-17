@@ -10,7 +10,8 @@
   "license": "ISC",
   "dependencies": {
     "got": "^9.6.0",
-    "moment": "^2.24.0",
+    "ical-generator": "^1.10.0",
+    "moment": "^2.25.3",
     "moment-json-parser": "^0.9.1"
   }
 }

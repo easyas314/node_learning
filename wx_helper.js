@@ -1,16 +1,18 @@
 //
 // NOAA wx development
+const util = require('util');
+
 console.log("-> You have reached the wx_helper code!")
 var moment = require('moment');
 var now = moment(); // this will get the current date & time.
 
 const got = require('got');
-const customGot = got.extend({
-	prefixUrl: "api.weather.gov",
-	responseType: "json",
-	headers: {"User-Agent": "MagicMirror/0.2 https://github.com/easyas314/MMM-EventsFeed"},
-	retry: {retries: 0}
-});
+// const customGot = got.extend({
+// 	//prefixUrl: "https://api.weather.gov",
+// 	responseType: "json",
+// 	headers: {"User-Agent": "MagicMirror/0.2 https://github.com/easyas314/MMM-EventsFeed"},
+// 	retry: {retries: 0}
+// });
 
 var wx_helper =[];
 
@@ -44,18 +46,29 @@ module.exports = {
 		//	You can retrieve the metadata for a given latitude/longitude coordinate with the /points endpoint (https://api.weather.gov/points/{lat},{lon}).
 		// 		base_url: "https://api.weather.gov",
 		var wxPointsURL = config.base_url + "/points/" + config.lat + "," + config.lon;
-		var pointsEndpoint = "points/" + config.lat + "," + config.lon;
-        console.log(`[${wx_helper.name}]:getWxGrid() endpoint = ${pointsEndpoint}`);
+		//var pointsEndpoint = "points/" + config.lat + "," + config.lon;
+        console.log(`[${wx_helper.name}]:getWxGrid() calling = ${wxPointsURL}`);
 		(async () => {
 			try {
-				const response = await customGot(pointsEndpoint);
-				// , {
-				// 	headers: {"User-Agent": "MM-wx-gov/0.1 suowwisq@gmail.com"}
-				// 	, responseType: 'json'
-				// });
-        		console.log(`[${wx_helper.name}]:getWxGrid() resp.prop = ${response.properties}`);
+				// take the body object 'guts'
+				const {body} = await got(wxPointsURL, {
+					headers: {"User-Agent": "MM-wx-gov/0.1 suowwisq@gmail.com"}
+					,responseType: 'json'
+					//, resolveBodyOnly: true
+				});
+				//console.log(`[${wx_helper.name}]:getWxGrid() returned type = ${typeof(body)}`);
+				// body contains text, so make it a json object
+
+				// when the body OBJECT version is examined, it has PassThrough, etc ???
+				//console.log(`[${wx_helper.name}]:getWxGrid() ---- body --------------------`);
+				//console.log(util.inspect(body, false, 1, true /* enable colors */))
+
+				farkle = JSON.parse(body)
+				// NOW it looks to follow the json output from the url in a browser...
+        		//console.log(`[${wx_helper.name}]:getWxGrid() ---- farkle.properties --------------------`);
+				//console.log(util.inspect(farkle.properties, false, 2, true /* enable colors */))
 				//  The forecastGridData property will provide a link to the correct gridpoint for that location.
-				wx_helper.wxForecastGridURL = resp.properties.forecastGridData;
+				wx_helper.wxForecastGridURL = farkle.properties.forecastGridData;
 				console.log(`[${wx_helper.name}] wx-grid-url is ${wx_helper.wxForecastGridURL}`);
 				//=> '<!doctype html> ...'
 			} catch (error) {
